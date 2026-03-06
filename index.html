@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seam — Minecraft project planner</title>
+  <meta name="description" content="Seam untangles Minecraft project dependencies automatically, from the actual game data. Plan your technical world without the spreadsheet.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================================================
+       TOKENS — mirrors design-system.css
+       ========================================================= */
+    :root {
+      --bg-base:       #0F1117;
+      --bg-surface:    #181C27;
+      --bg-raised:     #1F2435;
+      --border:        #2A2F42;
+      --text-primary:  #E8EAF0;
+      --text-muted:    #6E748A;
+      --text-disabled: #3C4158;
+      --accent:        #4A7CFF;
+      --accent-muted:  #1E2D5C;
+      --green:         #3DBA7A;
+      --amber:         #E8A225;
+      --font-ui:       'IBM Plex Mono', 'Courier New', monospace;
+      --font-body:     'Inter', system-ui, sans-serif;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --space-8: 48px;
+      --space-10: 80px;
+      --radius:  6px;
+      --max-width: 1080px;
+      --transition-base: 150ms ease-in-out;
+    }
+
+    /* =========================================================
+       RESET
+       ========================================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+      /* subtle noise texture */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    img { display: block; max-width: 100%; }
+
+    /* =========================================================
+       LAYOUT
+       ========================================================= */
+    .container {
+      max-width: var(--max-width);
+      margin-inline: auto;
+      padding-inline: var(--space-4);
+    }
+
+    section { padding-block: var(--space-10); }
+    section + section { border-top: 1px solid var(--border); }
+
+    /* =========================================================
+       NAV
+       ========================================================= */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: rgba(15, 17, 23, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav__inner {
+      max-width: var(--max-width);
+      margin-inline: auto;
+      padding-inline: var(--space-4);
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav__wordmark {
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .nav__wordmark:hover { text-decoration: none; }
+
+    .nav__cta {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 500;
+      background-color: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 8px 16px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color var(--transition-base);
+    }
+
+    .nav__cta:hover {
+      background-color: #3a6ae8;
+      text-decoration: none;
+    }
+
+    /* =========================================================
+       HERO
+       ========================================================= */
+    .hero {
+      min-height: calc(100svh - 56px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-block: var(--space-10);
+      border-top: none;
+    }
+
+    .hero__inner {
+      max-width: var(--max-width);
+      margin-inline: auto;
+      padding-inline: var(--space-4);
+    }
+
+    /* Subtle grid lines behind the hero — technical graph paper feel */
+    .hero {
+      background-image:
+        linear-gradient(rgba(74, 124, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(74, 124, 255, 0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .hero__label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: var(--space-5);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .hero__label::before {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      height: 1px;
+      background-color: var(--accent);
+    }
+
+    .hero__hook {
+      font-family: var(--font-ui);
+      font-size: clamp(18px, 4vw, 28px);
+      font-weight: 600;
+      line-height: 1.45;
+      color: var(--text-primary);
+      margin-bottom: var(--space-5);
+    }
+
+    /* Each line of the cascade fades in slightly */
+    .hero__hook span {
+      display: block;
+      color: var(--text-muted);
+      animation: fade-up 0.5s ease forwards;
+      opacity: 0;
+    }
+
+    .hero__hook span:nth-child(1) { animation-delay: 0.1s; }
+    .hero__hook span:nth-child(2) { animation-delay: 0.25s; }
+    .hero__hook span:nth-child(3) { animation-delay: 0.4s; color: var(--text-primary); }
+
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero__solution {
+      font-size: clamp(15px, 2.5vw, 18px);
+      color: var(--text-primary);
+      margin-bottom: var(--space-6);
+      max-width: 560px;
+      animation: fade-up 0.5s ease 0.6s forwards;
+      opacity: 0;
+    }
+
+    .hero__solution strong {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .hero__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      animation: fade-up 0.5s ease 0.75s forwards;
+      opacity: 0;
+    }
+
+    .btn-primary {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 500;
+      background-color: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 10px 20px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color var(--transition-base);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .btn-primary:hover { background-color: #3a6ae8; text-decoration: none; }
+
+    .btn-secondary {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 500;
+      background-color: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 20px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color var(--transition-base), border-color var(--transition-base);
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-secondary:hover {
+      color: var(--text-primary);
+      border-color: #3a4060;
+      text-decoration: none;
+    }
+
+    /* Screenshot placeholder — hero */
+    .hero__screenshot {
+      margin-top: var(--space-8);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: var(--bg-surface);
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fade-up 0.6s ease 0.9s forwards;
+      opacity: 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero__screenshot::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--accent-muted) 0%, transparent 60%);
+      opacity: 0.3;
+    }
+
+    .placeholder-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-disabled);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* =========================================================
+       SECTION LABEL
+       ========================================================= */
+    .section-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: var(--space-5);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background-color: var(--border);
+    }
+
+    /* =========================================================
+       PROBLEM SECTION
+       ========================================================= */
+    .problem__body {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin-bottom: var(--space-6);
+      line-height: 1.7;
+    }
+
+    .problem__body strong {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .problem__screenshot {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: var(--bg-surface);
+      aspect-ratio: 16 / 7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .problem__screenshot::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, var(--bg-raised) 0%, transparent 100%);
+    }
+
+    /* =========================================================
+       HOW IT WORKS
+       ========================================================= */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    .step {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--space-5);
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: var(--space-4);
+      align-items: start;
+      transition: border-color var(--transition-base);
+    }
+
+    .step:hover { border-color: #3a4060; }
+
+    .step__number {
+      font-family: var(--font-ui);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-disabled);
+      line-height: 1;
+      padding-top: 2px;
+    }
+
+    .step__title {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .step__body {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Solution screenshot placeholder */
+    .solution__screenshot {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: var(--bg-surface);
+      aspect-ratio: 16 / 8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .solution__screenshot::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 40%, var(--accent-muted) 100%);
+      opacity: 0.4;
+    }
+
+    /* =========================================================
+       FEATURES STUB
+       ========================================================= */
+    .features-stub {
+      background-color: var(--bg-surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: var(--space-5);
+      text-align: center;
+    }
+
+    .features-stub p {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-disabled);
+    }
+
+    /* =========================================================
+       SUPPORT SECTION
+       ========================================================= */
+    .support__body {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 520px;
+      margin-bottom: var(--space-5);
+      line-height: 1.7;
+    }
+
+    .support__body strong {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .kofi-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 500;
+      background-color: var(--bg-raised);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 18px;
+      text-decoration: none;
+      transition: border-color var(--transition-base), background-color var(--transition-base);
+    }
+
+    .kofi-btn:hover {
+      border-color: #3a4060;
+      background-color: #262c40;
+      text-decoration: none;
+    }
+
+    .kofi-btn__icon {
+      font-size: 16px;
+    }
+
+    /* =========================================================
+       FOOTER
+       ========================================================= */
+    footer {
+      border-top: 1px solid var(--border);
+      padding-block: var(--space-6);
+    }
+
+    .footer__inner {
+      max-width: var(--max-width);
+      margin-inline: auto;
+      padding-inline: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .footer__wordmark {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-disabled);
+    }
+
+    .footer__links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-4);
+    }
+
+    .footer__link {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color var(--transition-base);
+    }
+
+    .footer__link:hover { color: var(--text-primary); text-decoration: none; }
+
+    .footer__copy {
+      font-size: 12px;
+      color: var(--text-disabled);
+      margin-top: var(--space-2);
+    }
+
+    /* =========================================================
+       DESKTOP OVERRIDES (≥ 768px)
+       ========================================================= */
+    @media (min-width: 768px) {
+      section { padding-block: calc(var(--space-10) * 1.25); }
+
+      .container { padding-inline: var(--space-6); }
+      .nav__inner { padding-inline: var(--space-6); }
+      .hero__inner { padding-inline: var(--space-6); }
+      .footer__inner { padding-inline: var(--space-6); flex-direction: row; align-items: center; justify-content: space-between; }
+      .footer__copy { margin-top: 0; }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-4);
+      }
+
+      .step {
+        grid-template-columns: 1fr;
+      }
+
+      .step__number {
+        font-size: 28px;
+        margin-bottom: var(--space-3);
+      }
+
+      .hero__hook { font-size: clamp(22px, 3vw, 32px); }
+    }
+  </style>
+
+</head>
+<body>
+
+  <!-- ===================== NAV ===================== -->
+
+  <nav class="nav">
+    <div class="nav__inner">
+      <a href="/" class="nav__wordmark">Seam</a>
+      <a href="https://app.seam.gg" class="nav__cta">Open the app</a>
+    </div>
+  </nav>
+
+  <!-- ===================== HERO ===================== -->
+
+  <section class="hero">
+    <div class="hero__inner">
+      <p class="hero__label">Minecraft project planner</p>
+
+```
+  <h1 class="hero__hook">
+    <span>You want to build an auto-crafter.</span>
+    <span>But first you need the iron farm. But the iron farm needs hoppers.</span>
+    <span>And hoppers need iron.</span>
+  </h1>
+
+  <p class="hero__solution">
+    Seam untangles that — <strong>automatically, from the actual game data.</strong>
+  </p>
+
+  <div class="hero__actions">
+    <a href="https://app.seam.gg" class="btn-primary">Open the app →</a>
+    <a href="#how-it-works" class="btn-secondary">See how it works</a>
+  </div>
+
+  <div class="hero__screenshot">
+    <span class="placeholder-label">Screenshot — roadmap view</span>
+  </div>
+</div>
+```
+
+  </section>
+
+  <!-- ===================== PROBLEM ===================== -->
+
+  <section id="problem">
+    <div class="container">
+      <p class="section-label">The problem</p>
+
+```
+  <p class="problem__body">
+    A serious technical world means months of planning across dozens of interdependent builds.
+    <strong>Most of it lives in your head, a spreadsheet, or a Discord thread</strong> — until
+    you're three farms deep and realize you forgot to account for the iron the iron farm itself needs to get started.
+  </p>
+
+  <div class="problem__screenshot">
+    <span class="placeholder-label">Screenshot — dependency tangle / before state</span>
+  </div>
+</div>
+```
+
+  </section>
+
+  <!-- ===================== HOW IT WORKS ===================== -->
+
+  <section id="how-it-works">
+    <div class="container">
+      <p class="section-label">How it works</p>
+
+```
+  <div class="steps">
+    <div class="step">
+      <span class="step__number">01</span>
+      <div>
+        <p class="step__title">Define your projects</p>
+        <p class="step__body">Add what each build requires and what it produces. Import from the community Idea Hub or start from scratch.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <span class="step__number">02</span>
+      <div>
+        <p class="step__title">Seam resolves the graph</p>
+        <p class="step__body">Reads directly from Minecraft's game data for your version. Figures out what you need, how to get it, and in what order.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <span class="step__number">03</span>
+      <div>
+        <p class="step__title">Execute</p>
+        <p class="step__body">Track resource gathering from your phone while you play. The plan stays in sync — check things off as you go.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="solution__screenshot">
+    <span class="placeholder-label">Screenshot — path generation output</span>
+  </div>
+</div>
+```
+
+  </section>
+
+  <!-- ===================== FEATURES STUB ===================== -->
+
+  <section id="features">
+    <div class="container">
+      <div class="features-stub">
+        <p>Feature callout — stubbed. Candidate: mobile resource tracking</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SUPPORT ===================== -->
+
+  <section id="support">
+    <div class="container">
+      <p class="section-label">Support the project</p>
+
+```
+  <p class="support__body">
+    Seam is a <strong>hobby project built for the technical Minecraft community</strong>.
+    It's free to use. If it saves you a spreadsheet, consider buying me a coffee —
+    it keeps the server running and the motivation up.
+  </p>
+
+  <a href="https://ko-fi.com" class="kofi-btn">
+    <span class="kofi-btn__icon">☕</span>
+    Support on Ko-fi
+  </a>
+</div>
+```
+
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+
+  <footer>
+    <div class="footer__inner">
+      <span class="footer__wordmark">Seam</span>
+      <div class="footer__links">
+        <a href="https://app.seam.gg" class="footer__link">Open the app</a>
+        <a href="https://github.com" class="footer__link">GitHub</a>
+        <a href="https://ko-fi.com" class="footer__link">Ko-fi</a>
+      </div>
+      <p class="footer__copy">© 2025 Seam</p>
+    </div>
+  </footer>
+
+</body>
+</html>

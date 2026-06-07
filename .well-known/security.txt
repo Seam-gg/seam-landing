@@ -1,0 +1,7 @@
+# Security policy for seam.gg
+# https://securitytxt.org — RFC 9116
+
+Contact: mailto:even.gultvedt@gmail.com
+Expires: 2027-06-06T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://seam.gg/.well-known/security.txt

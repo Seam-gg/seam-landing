@@ -1,11 +1,15 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seam — Minecraft project planner</title>
-  <meta name="description" content="Seam untangles Minecraft project dependencies automatically, from the actual game data. Plan your technical world without the spreadsheet.">
+  <title>Seam — plan a technical Minecraft world</title>
+  <meta name="description" content="Seam reads Minecraft's own recipes, drops and trades to work out what your builds need, which farms are worth building, and what to do next. Free, with a Fabric mod that counts your chests in-game.">
+  <meta property="og:title" content="Seam — plan a technical Minecraft world">
+  <meta property="og:description" content="What your builds need, which farms are worth it, and what to do next. Worked out from the game's own data.">
+  <meta property="og:image" content="https://seam.gg/img/roadmap-graph.webp">
+  <meta property="og:url" content="https://seam.gg/">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
@@ -39,6 +43,7 @@
       --progress:       #4F7A2B;   /* grass — completion is status, not brand */
       --green-bg:       #DEE8CB;
       --red-bg:         #F0DACF;
+      --shadow-card:    0 1px 2px rgba(42, 34, 24, 0.06);
       --font-ui:        'IBM Plex Mono', 'Courier New', monospace;
       --font-body:      'Inter', system-ui, sans-serif;
       --text-xs: 11px;
@@ -77,7 +82,7 @@
     }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    img { display: block; max-width: 100%; }
+    img { display: block; max-width: 100%; height: auto; }
 
     /* =========================================================
        LAYOUT
@@ -88,7 +93,7 @@
       padding-inline: var(--space-4);
     }
 
-    section { padding-block: var(--space-10); }
+    section { padding-block: var(--space-8); }
     section + section { border-top: 1px solid var(--border); }
 
     /* =========================================================
@@ -103,7 +108,6 @@
       -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
     }
-
     .nav__inner {
       max-width: var(--max-width);
       margin-inline: auto;
@@ -113,49 +117,58 @@
       align-items: center;
       justify-content: space-between;
     }
-
-    .nav__wordmark {
-      display: inline-flex;
-      align-items: center;
-      text-decoration: none;
-    }
-
+    .nav__wordmark { display: inline-flex; align-items: center; text-decoration: none; }
     .nav__wordmark:hover { text-decoration: none; }
-
-    .nav__logo {
-      display: block;
-      height: 22px;
-      width: auto;
+    .nav__logo { display: block; height: 22px; width: auto; }
+    .nav__links { display: flex; align-items: center; gap: var(--space-5); }
+    .nav__link {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color var(--transition-base);
     }
+    .nav__link:hover { color: var(--text-primary); text-decoration: none; }
 
-    .nav__cta {
+    /* =========================================================
+       BUTTONS
+       ========================================================= */
+    .btn-primary, .btn-secondary {
       font-family: var(--font-ui);
       font-size: 13px;
       font-weight: 500;
+      border-radius: var(--radius);
+      padding: 10px 20px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      transition: background-color var(--transition-base), border-color var(--transition-base);
+    }
+    .btn-primary {
       background-color: var(--accent);
       color: var(--on-accent);
       border: 1px solid transparent;
-      border-radius: var(--radius);
-      padding: 8px 16px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background-color var(--transition-base);
     }
-
-    .nav__cta:hover {
-      background-color: var(--accent-hover);
+    .btn-primary:hover { background-color: var(--accent-hover); text-decoration: none; }
+    .btn-secondary {
+      background-color: var(--bg-raised);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background-color: var(--bg-surface);
+      border-color: var(--border-strong);
       text-decoration: none;
     }
+    .btn-primary--sm, .btn-secondary--sm { padding: 8px 16px; }
 
     /* =========================================================
        HERO
        ========================================================= */
     .hero {
-      min-height: calc(100svh - 56px);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding-block: var(--space-10);
+      padding-block: var(--space-8) var(--space-8);
       border-top: none;
       /* Subtle grid lines — technical graph paper feel */
       background-image:
@@ -163,34 +176,6 @@
         linear-gradient(90deg, rgba(44, 110, 158, 0.05) 1px, transparent 1px);
       background-size: 32px 32px;
     }
-
-    .hero__inner {
-      max-width: var(--max-width);
-      margin-inline: auto;
-      padding-inline: var(--space-4);
-    }
-
-    .hero__label {
-      font-family: var(--font-ui);
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: var(--space-5);
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-
-    .hero__label::before {
-      content: '';
-      display: inline-block;
-      width: 24px;
-      height: 1px;
-      background-color: var(--accent);
-    }
-
     .hero__hook {
       font-family: var(--font-ui);
       font-size: clamp(18px, 4vw, 28px);
@@ -198,124 +183,75 @@
       line-height: 1.45;
       color: var(--text-primary);
       margin-bottom: var(--space-5);
+      max-width: 760px;
     }
-
-    /* Each line of the cascade fades in slightly */
+    /* The chain reads one link at a time. */
     .hero__hook span {
       display: block;
       color: var(--text-muted);
       animation: fade-up 0.5s ease forwards;
       opacity: 0;
     }
-
-    .hero__hook span:nth-child(1) { animation-delay: 0.1s; }
-    .hero__hook span:nth-child(2) { animation-delay: 0.25s; }
-    .hero__hook span:nth-child(3) { animation-delay: 0.4s; color: var(--text-primary); }
-
+    .hero__hook span:nth-child(1) { animation-delay: 0.05s; }
+    .hero__hook span:nth-child(2) { animation-delay: 0.2s; }
+    .hero__hook span:nth-child(3) { animation-delay: 0.35s; color: var(--text-primary); }
     @keyframes fade-up {
       from { opacity: 0; transform: translateY(6px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-
+    @media (prefers-reduced-motion: reduce) {
+      .hero__hook span { animation: none; opacity: 1; }
+    }
     .hero__solution {
       font-size: clamp(15px, 2.5vw, 18px);
       color: var(--text-primary);
-      margin-bottom: var(--space-6);
-      max-width: 560px;
-      animation: fade-up 0.5s ease 0.6s forwards;
-      opacity: 0;
+      margin-bottom: var(--space-5);
+      max-width: 620px;
     }
-
-    .hero__solution strong {
-      color: var(--accent);
-      font-weight: 500;
-    }
-
     .hero__actions {
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
       gap: var(--space-3);
-      animation: fade-up 0.5s ease 0.75s forwards;
-      opacity: 0;
     }
-
-    .btn-primary {
+    .hero__note {
       font-family: var(--font-ui);
-      font-size: 13px;
-      font-weight: 500;
-      background-color: var(--accent);
-      color: var(--on-accent);
-      border: 1px solid transparent;
-      border-radius: var(--radius);
-      padding: 10px 20px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background-color var(--transition-base);
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-2);
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: var(--space-4);
     }
-
-    .btn-primary:hover { background-color: var(--accent-hover); text-decoration: none; }
-
-    .btn-secondary {
-      font-family: var(--font-ui);
-      font-size: 13px;
-      font-weight: 500;
-      background-color: var(--bg-raised);
-      color: var(--text-primary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 10px 20px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background-color var(--transition-base), border-color var(--transition-base);
-      display: inline-flex;
-      align-items: center;
+    /* =========================================================
+       FIGURES — a screenshot on the page, framed like a pasted-in print
+       ========================================================= */
+    .figure {
+      margin: 0;
     }
-
-    .btn-secondary:hover {
-      background-color: var(--bg-surface);
-      border-color: var(--border-strong);
-      text-decoration: none;
-    }
-
-    /* Screenshot placeholder — hero */
-    .hero__screenshot {
-      margin-top: var(--space-8);
+    .figure.hero__figure { margin-top: var(--space-8); }
+    .figure__frame {
       border: 1px solid var(--border);
       border-radius: var(--radius);
       background-color: var(--bg-surface);
-      aspect-ratio: 16 / 9;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: fade-up 0.6s ease 0.9s forwards;
-      opacity: 0;
+      box-shadow: var(--shadow-card);
       overflow: hidden;
-      position: relative;
     }
-
-    .hero__screenshot::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, var(--accent-muted) 0%, transparent 60%);
-      opacity: 0.5;
+    .figure__frame img { width: 100%; }
+    .figure__frame--narrow {
+      max-width: 343px;
     }
-
-    .placeholder-label {
+    /* A short, wide strip: on a phone it pans sideways rather than shrinking to a smear. */
+    .figure__frame--wide { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .figure__frame--wide img { min-width: 720px; }
+    .figure--center { display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .figure figcaption {
       font-family: var(--font-ui);
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-disabled);
-      position: relative;
-      z-index: 1;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: var(--space-3);
+      line-height: 1.5;
     }
 
     /* =========================================================
-       SECTION LABEL
+       SECTION LABEL — uppercase mono, like the app's own headers
        ========================================================= */
     .section-label {
       font-family: var(--font-ui);
@@ -324,139 +260,102 @@
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--text-muted);
-      margin-bottom: var(--space-5);
+      margin-bottom: var(--space-3);
       display: flex;
       align-items: center;
       gap: var(--space-3);
     }
-
     .section-label::after {
       content: '';
       flex: 1;
       height: 1px;
       background-color: var(--border);
     }
+    .section-label--accent { color: var(--accent); }
+    .section-label--accent::after { background-color: var(--accent); opacity: 0.4; }
 
-    /* =========================================================
-       PROBLEM SECTION
-       ========================================================= */
-    .problem__body {
-      font-size: 15px;
-      color: var(--text-muted);
-      max-width: 600px;
-      margin-bottom: var(--space-6);
-      line-height: 1.7;
+    h2 {
+      font-family: var(--font-ui);
+      font-size: clamp(18px, 3vw, 22px);
+      font-weight: 600;
+      line-height: 1.35;
+      margin-bottom: var(--space-4);
     }
-
-    .problem__body strong {
+    .lede {
+      font-size: 16px;
       color: var(--text-primary);
-      font-weight: 500;
+      max-width: 640px;
+      line-height: 1.65;
     }
-
-    .problem__screenshot {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background-color: var(--bg-surface);
-      aspect-ratio: 16 / 7;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .problem__screenshot::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(90deg, var(--bg-raised) 0%, transparent 100%);
-    }
+    .lede + .lede { margin-top: var(--space-3); }
+    .prose p { color: var(--text-primary); line-height: 1.65; }
+    .prose p + p { margin-top: var(--space-3); }
+    .prose strong { font-weight: 500; }
 
     /* =========================================================
-       HOW IT WORKS
+       FEATURE ROWS — text beside a screenshot, alternating sides
        ========================================================= */
-    .steps {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-4);
-      margin-bottom: var(--space-6);
-    }
-
-    .step {
-      background-color: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: var(--space-5);
+    .feature {
       display: grid;
-      grid-template-columns: 40px 1fr;
-      gap: var(--space-4);
-      align-items: start;
-      transition: border-color var(--transition-base);
-    }
-
-    .step:hover { border-color: var(--border-strong); }
-
-    .step__number {
-      font-family: var(--font-ui);
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--text-disabled);
-      line-height: 1;
-      padding-top: 2px;
-    }
-
-    .step__title {
-      font-family: var(--font-ui);
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--space-2);
-    }
-
-    .step__body {
-      font-size: 14px;
-      color: var(--text-muted);
-      line-height: 1.6;
-    }
-
-    /* Solution screenshot placeholder */
-    .solution__screenshot {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background-color: var(--bg-surface);
-      aspect-ratio: 16 / 8;
-      display: flex;
+      grid-template-columns: 1fr;
+      gap: var(--space-5);
       align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
     }
-
-    .solution__screenshot::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, transparent 40%, var(--accent-muted) 100%);
-      opacity: 0.6;
+    .feature + .feature {
+      margin-top: var(--space-8);
+      padding-top: var(--space-8);
+      border-top: 1px dashed var(--border);
     }
+    .feature__text { max-width: 460px; }
+    .feature__text h2 { margin-bottom: var(--space-3); }
+    .feature__text p { color: var(--text-primary); line-height: 1.65; }
+    .feature__text p + p { margin-top: var(--space-3); }
+    .feature__figure { min-width: 0; }
 
     /* =========================================================
-       FEATURES STUB
+       THE MOD
        ========================================================= */
-    .features-stub {
+    .mod {
       background-color: var(--bg-surface);
-      border: 1px dashed var(--border);
-      border-radius: var(--radius);
-      padding: var(--space-5);
-      text-align: center;
     }
-
-    .features-stub p {
+    .mod__grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-5);
+    }
+    .mod__facts {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: var(--bg-raised);
+      padding: var(--space-4) var(--space-5);
       font-family: var(--font-ui);
+      font-size: 13px;
+      align-self: start;
+    }
+    .mod__facts dt {
       font-size: 11px;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--text-disabled);
+      color: var(--text-muted);
+      margin-top: var(--space-3);
+    }
+    .mod__facts dt:first-child { margin-top: 0; }
+    .mod__facts dd { color: var(--text-primary); }
+    .mod__facts dd a { white-space: nowrap; }
+    .mod__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      margin-top: var(--space-5);
+    }
+    kbd {
+      font-family: var(--font-ui);
+      font-size: 0.85em;
+      border: 1px solid var(--border-strong);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      padding: 0 6px;
+      background-color: var(--bg-raised);
     }
 
     /* =========================================================
@@ -466,7 +365,6 @@
       border-top: 1px solid var(--border);
       padding-block: var(--space-6);
     }
-
     .footer__inner {
       max-width: var(--max-width);
       margin-inline: auto;
@@ -475,7 +373,6 @@
       flex-direction: column;
       gap: var(--space-3);
     }
-
     .footer__wordmark {
       font-family: var(--font-ui);
       font-size: 12px;
@@ -487,15 +384,8 @@
       align-items: center;
       gap: var(--space-2);
     }
-
     .footer__mark { display: block; height: 18px; width: auto; }
-
-    .footer__links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-4);
-    }
-
+    .footer__links { display: flex; flex-wrap: wrap; gap: var(--space-4); }
     .footer__link {
       font-family: var(--font-ui);
       font-size: 12px;
@@ -503,155 +393,229 @@
       text-decoration: none;
       transition: color var(--transition-base);
     }
-
     .footer__link:hover { color: var(--text-primary); text-decoration: none; }
-
-    .footer__copy {
-      font-size: 12px;
-      color: var(--text-disabled);
-      margin-top: var(--space-2);
-    }
+    .footer__copy { font-size: 12px; color: var(--text-disabled); margin-top: var(--space-2); }
 
     /* =========================================================
        DESKTOP OVERRIDES (≥ 768px)
        ========================================================= */
     @media (min-width: 768px) {
-      section { padding-block: calc(var(--space-10) * 1.25); }
-
-      .container { padding-inline: var(--space-6); }
-      .nav__inner { padding-inline: var(--space-6); }
-      .hero__inner { padding-inline: var(--space-6); }
-      .footer__inner { padding-inline: var(--space-6); flex-direction: row; align-items: center; justify-content: space-between; }
+      section { padding-block: var(--space-10); }
+      .hero { padding-block: calc(var(--space-10) * 1.1) var(--space-10); }
+      .container, .nav__inner, .footer__inner { padding-inline: var(--space-6); }
+      .footer__inner { flex-direction: row; align-items: center; justify-content: space-between; }
       .footer__copy { margin-top: 0; }
-
-      .steps {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: var(--space-4);
-      }
-
-      .step {
-        grid-template-columns: 1fr;
-      }
-
-      .step__number {
-        font-size: 28px;
-        margin-bottom: var(--space-3);
-      }
-
       .hero__hook { font-size: clamp(22px, 3vw, 32px); }
+      .feature { grid-template-columns: 5fr 7fr; gap: var(--space-8); }
+      .feature--flip .feature__text { order: 2; }
+      .feature--flip .feature__figure { order: 1; }
+      .feature--narrow { grid-template-columns: 7fr 5fr; }
+      /* A short strip goes under its text at full width; beside it, the text would be unreadable. */
+      .feature--stack { grid-template-columns: 1fr; gap: var(--space-5); }
+      .feature--stack .feature__text { max-width: 640px; }
+      .figure__frame--wide img { min-width: 0; }
+      .mod__grid { grid-template-columns: 7fr 5fr; gap: var(--space-8); align-items: start; }
     }
   </style>
-
 </head>
 <body>
-
   <!-- ===================== NAV ===================== -->
-
   <nav class="nav">
     <div class="nav__inner">
       <a href="/" class="nav__wordmark" aria-label="Seam — home">
         <img src="seam-lockup-horizontal.svg" alt="Seam" class="nav__logo" width="111" height="40">
       </a>
-      <a href="https://app.seam.gg" class="nav__cta">Open the app</a>
+      <div class="nav__links">
+        <a href="#notebook" class="nav__link">The mod</a>
+        <a href="https://app.seam.gg" class="btn-primary btn-primary--sm">Open the app</a>
+      </div>
     </div>
   </nav>
 
   <!-- ===================== HERO ===================== -->
-
   <section class="hero">
-    <div class="hero__inner">
-      <p class="hero__label">Minecraft project planner</p>
-
+    <div class="container">
       <h1 class="hero__hook">
-        <span>You want to build an auto-crafter.</span>
-        <span>But first you need the iron farm. But the iron farm needs hoppers.</span>
-        <span>And hoppers need iron.</span>
+        <span>You want an auto-crafter.</span>
+        <span>So you need an iron farm. The iron farm needs hoppers.</span>
+        <span>Hoppers need iron.</span>
       </h1>
-
       <p class="hero__solution">
-        Seam untangles that — <strong>automatically, from the actual game data.</strong>
+        Seam reads the game's own recipes, drops and trades, adds up what every build in your
+        world needs, and tells you what to do first.
       </p>
-
       <div class="hero__actions">
         <a href="https://app.seam.gg" class="btn-primary">Open the app →</a>
-        <a href="#how-it-works" class="btn-secondary">See how it works</a>
+        <a href="#notebook" class="btn-secondary">Get the mod</a>
       </div>
+      <p class="hero__note">Free to use. Sign in with a Microsoft account, nothing to install.</p>
 
-      <div class="hero__screenshot">
-        <span class="placeholder-label">Screenshot — roadmap view</span>
-      </div>
+      <figure class="figure hero__figure">
+        <div class="figure__frame">
+          <img src="img/roadmap-graph.webp" width="1046" height="717"
+               alt="Seam's dependency graph for a survival world: a column of finished farms on the left, each with its item count, feeding curved arrows into a storage system project on the right. A slime farm is marked 'start here'."
+               fetchpriority="high">
+        </div>
+        <figcaption>The roadmap of a 29-project survival world. Line weight is items moved. Only one ordering here was set by hand; the rest is derived from what the projects need.</figcaption>
+      </figure>
     </div>
   </section>
 
-  <!-- ===================== PROBLEM ===================== -->
-
-  <section id="problem">
+  <!-- ===================== WHY ===================== -->
+  <section id="why">
     <div class="container">
-      <p class="section-label">The problem</p>
-
-      <p class="problem__body">
-        A serious technical world means months of planning across dozens of interdependent builds.
-        <strong>Most of it lives in your head, a spreadsheet, or a Discord thread</strong> — until
-        you're three farms deep and realize you forgot to account for the iron the iron farm itself needs to get started.
+      <p class="section-label">Why it exists</p>
+      <h2>A serious survival world is a supply chain, and the spreadsheet never keeps up.</h2>
+      <p class="lede">
+        After the first few farms, every new build depends on three others, and the quantities
+        stop fitting in your head. You forget that the iron farm needs iron to get started, or
+        that the storage system wants sixty thousand redstone before the sorters even exist.
       </p>
+      <p class="lede">
+        Seam holds the whole world at once. Every project lists what it needs; Seam works out
+        how to get it from Minecraft's actual recipes, loot tables and villager trades for your
+        version, then adds it all up across projects.
+      </p>
+    </div>
+  </section>
 
-      <div class="problem__screenshot">
-        <span class="placeholder-label">Screenshot — dependency tangle / before state</span>
+  <!-- ===================== IN PRACTICE ===================== -->
+  <section id="how">
+    <div class="container">
+      <p class="section-label">What that looks like</p>
+
+      <div class="feature feature--stack">
+        <div class="feature__text">
+          <h2>It tells you what to do next.</h2>
+          <p>
+            Open a project and the first thing on the page is the one material worth going
+            after now. If a farm you already built produces it, Seam says so instead of sending
+            you to a mine.
+          </p>
+          <p>Not in the mood for that one? Ask for something else.</p>
+        </div>
+        <figure class="figure feature__figure">
+          <div class="figure__frame figure__frame--wide">
+            <img src="img/next-up.webp" width="1048" height="112" loading="lazy"
+                 alt="A 'Next up' card reading: 63,273 Redstone Dust. A farm already makes this, go and empty it. With a 'Something else' button.">
+          </div>
+          <figcaption>The next-up card on a storage-system project.</figcaption>
+        </figure>
+      </div>
+
+      <div class="feature feature--stack">
+        <div class="feature__text">
+          <h2>It knows when a farm beats a pickaxe.</h2>
+          <p>
+            Every raw material is priced against the farm designs in your idea bank.
+            Twenty-eight thousand spruce logs is about 45 minutes of a tree farm running, or a
+            long week by hand.
+          </p>
+          <p>
+            Seam lists the designs that would cover the gap, how long each needs to run, and
+            which materials still have no design at all.
+          </p>
+        </div>
+        <figure class="figure feature__figure">
+          <div class="figure__frame figure__frame--wide">
+            <img src="img/plan-farm-scale.webp" width="1048" height="479" loading="lazy"
+                 alt="A 'Worth a farm' panel: 4 raw materials need more than 1,728 and your designs cover 2 of them. A tree farm design covers 28,190 spruce logs at about 45 minutes running; a sand duper covers 5,360 sand at about 7 minutes. Stone and packed ice have no design yet.">
+          </div>
+          <figcaption>Farm suggestions for the same project, with running time per design.</figcaption>
+        </figure>
+      </div>
+
+      <div class="feature feature--stack">
+        <div class="feature__text">
+          <h2>It shows the whole world at a glance.</h2>
+          <p>
+            Which project to start, what it is waiting on, how deep the longest chain goes, and
+            how much of the plan your finished farms already feed.
+          </p>
+          <p>
+            Dependencies come from the materials, not from a form. When a build needs something
+            a planned farm will make, the farm becomes a prerequisite on its own.
+          </p>
+        </div>
+        <figure class="figure feature__figure">
+          <div class="figure__frame figure__frame--wide">
+            <img src="img/roadmap-start.webp" width="1046" height="187" loading="lazy"
+                 alt="The top of a roadmap: 'Start here: New slime farm, in progress. First of 2 projects still to build, waits on Cobble farm for 100,000 cobblestone.' Beside it, at a glance: still to build 6 of 29 projects, longest chain 4 projects deep, feeding 237,431 items from 22 farms.">
+          </div>
+          <figcaption>The top of the roadmap for the same world.</figcaption>
+        </figure>
+      </div>
+
+      <div class="feature feature--flip feature--narrow">
+        <div class="feature__text">
+          <h2>Counting happens on your phone.</h2>
+          <p>
+            Every project has a resource list with buttons sized for a thumb: plus one, a stack,
+            a shulker box. Count while you empty the farm. The plan updates for everyone in the
+            world.
+          </p>
+          <p>
+            The list is sorted by what is needed first, so the top row is always the right thing
+            to be holding.
+          </p>
+        </div>
+        <figure class="figure feature__figure figure--center">
+          <div class="figure__frame figure__frame--narrow">
+            <img src="img/resume-hero-m.webp" width="343" height="660" loading="lazy"
+                 alt="The project list on a phone: the active project's resources with a progress bar per item and -1728, -64, -1, +1, +64 and +1728 buttons under each.">
+          </div>
+          <figcaption>The world's front page at phone width.</figcaption>
+        </figure>
       </div>
     </div>
   </section>
 
-  <!-- ===================== HOW IT WORKS ===================== -->
-
-  <section id="how-it-works">
+  <!-- ===================== THE MOD ===================== -->
+  <section id="notebook" class="mod">
     <div class="container">
-      <p class="section-label">How it works</p>
-
-      <div class="steps">
-        <div class="step">
-          <span class="step__number">01</span>
-          <div>
-            <p class="step__title">Define your projects</p>
-            <p class="step__body">Add what each build requires and what it produces. Import from the community Idea Hub or start from scratch.</p>
+      <p class="section-label section-label--accent">Seam Notebook · the mod</p>
+      <div class="mod__grid">
+        <div class="prose">
+          <h2>For when you would rather not tab out.</h2>
+          <p>
+            Seam Notebook is a Fabric mod for Minecraft 1.21.11. Press <kbd>N</kbd> in game and
+            the notebook opens on the project you are working on: what is still needed, the
+            tasks, and which chests you have tagged.
+          </p>
+          <p>
+            Sneak and right-click a chest to assign it to a project. Put the same jar on the
+            server and it counts what is in the tagged chests, so the numbers in Seam match your
+            storage room without anyone typing them in. A double chest counts once, and a
+            shulker box inside a chest counts too.
+          </p>
+          <p>
+            The mod registers no blocks or items, so a player without it can still join a
+            server that has it, and the other way around.
+          </p>
+          <div class="mod__actions">
+            <a href="https://modrinth.com/mod/seam-notebook" class="btn-primary">Get it on Modrinth →</a>
+            <a href="https://github.com/Seam-gg/seam-mod" class="btn-secondary">Source on GitHub</a>
           </div>
+          <!-- In-game screenshots go here once there are some from a real world:
+               a <figure class="figure"> with the notebook open, and one with the tagging picker. -->
         </div>
-
-        <div class="step">
-          <span class="step__number">02</span>
-          <div>
-            <p class="step__title">Seam resolves the graph</p>
-            <p class="step__body">Reads directly from Minecraft's game data for your version. Figures out what you need, how to get it, and in what order.</p>
-          </div>
-        </div>
-
-        <div class="step">
-          <span class="step__number">03</span>
-          <div>
-            <p class="step__title">Execute</p>
-            <p class="step__body">Track resource gathering from your phone while you play. The plan stays in sync — check things off as you go.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="solution__screenshot">
-        <span class="placeholder-label">Screenshot — path generation output</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===================== FEATURES STUB ===================== -->
-
-  <section id="features">
-    <div class="container">
-      <div class="features-stub">
-        <p>Feature callout — stubbed. Candidate: mobile resource tracking</p>
+        <dl class="mod__facts">
+          <dt>Loader</dt>
+          <dd>Fabric, with Fabric Language Kotlin</dd>
+          <dt>Minecraft</dt>
+          <dd>1.21.11</dd>
+          <dt>Runs on</dt>
+          <dd>Client, and optionally the server</dd>
+          <dt>Status</dt>
+          <dd>Early. It works in real worlds; expect rough edges.</dd>
+          <dt>Connects to</dt>
+          <dd>Your Seam account, approved from the browser</dd>
+        </dl>
       </div>
     </div>
   </section>
 
   <!-- ===================== FOOTER ===================== -->
-
   <footer>
     <div class="footer__inner">
       <span class="footer__wordmark">
@@ -660,10 +624,11 @@
       </span>
       <div class="footer__links">
         <a href="https://app.seam.gg" class="footer__link">Open the app</a>
+        <a href="https://modrinth.com/mod/seam-notebook" class="footer__link">Seam Notebook on Modrinth</a>
+        <a href="https://github.com/Seam-gg" class="footer__link">GitHub</a>
       </div>
       <p class="footer__copy">© 2026 Seam</p>
     </div>
   </footer>
-
 </body>
 </html>
